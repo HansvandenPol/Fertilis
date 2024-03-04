@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("task")
+@CrossOrigin
 @Validated
 @Slf4j
 public class TaskController {
@@ -35,7 +37,7 @@ public class TaskController {
     log.info(LocalDate.now().toString());
 
     taskList.forEach(i -> {
-      taskViewModels.add(new TaskViewModel(i.getName(), i.getDescription()));
+      taskViewModels.add(new TaskViewModel(i.getName(), i.getDescription(), i.getCategory()));
     });
 
     log.info("count: {}", taskViewModels.size());
@@ -50,7 +52,7 @@ public class TaskController {
     final List<TaskViewModel> taskViewModels = new ArrayList<>();
 
     taskList.forEach(i -> {
-      taskViewModels.add(new TaskViewModel(i.getName(), i.getDescription()));
+      taskViewModels.add(new TaskViewModel(i.getName(), i.getDescription(), i.getCategory()));
     });
 
     return ResponseEntity.ok(taskViewModels);
