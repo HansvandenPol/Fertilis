@@ -20,10 +20,10 @@ public class KnmiApi {
   @Value("${knmi.apikey}")
   private String apikey;
 
-  public KnmiFilesModel getFiles(String dataset, String versionId) {
+  public KnmiFilesModel getFiles(KnmiFileRequestModel requestModel) {
     try {
       return restClient.get()
-                                             .uri(knmiApiBaseUrl + dataset + "/versions/" + versionId + "/files?sorting=desc&maxKeys=1")
+                                             .uri(knmiApiBaseUrl + requestModel.getDataset() + "/versions/" + requestModel.getVersion() + "/files?sorting=" + requestModel.getOrder().toLower() + "&maxKeys=" + requestModel.getMaxRequestSize())
                                              .header("Authorization", apikey)
                                              .header("Accept", MediaType.APPLICATION_JSON_VALUE)
                                              .retrieve()
@@ -34,10 +34,10 @@ public class KnmiApi {
     }
   }
 
-  public KnmiFileUrlModel getTemporaryUrl(String dataset, String versionId, String fileName) {
+  public KnmiFileUrlModel getTemporaryUrl(KnmiFileRequestModel requestModel, String fileName) {
     try {
       return restClient.get()
-                                             .uri(knmiApiBaseUrl + dataset + "/versions/" + versionId + "/files/" + fileName + "/url")
+                                             .uri(knmiApiBaseUrl + requestModel.getDataset() + "/versions/" + requestModel.getVersion() + "/files/" + fileName + "/url")
                                              .header("Authorization", apikey)
                                              .header("Accept", MediaType.APPLICATION_JSON_VALUE)
                                              .retrieve()
