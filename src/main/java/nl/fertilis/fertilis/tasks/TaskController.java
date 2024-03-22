@@ -9,9 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -49,6 +51,20 @@ public class TaskController {
   @GetMapping("period")
   public ResponseEntity<List<TaskViewModel>> getTaskForPeriod(@RequestBody RetrieveTaskViewModel viewModel) {
     final List<Task> taskList = taskDaoService.getTaskByPeriod(viewModel.getPeriod());
+    final List<TaskViewModel> taskViewModels = new ArrayList<>();
+
+    taskList.forEach(i -> {
+      taskViewModels.add(new TaskViewModel(i.getName(), i.getDescription(), i.getCategory()));
+    });
+
+    return ResponseEntity.ok(taskViewModels);
+  }
+
+  @GetMapping("month/{monthId}")
+  public ResponseEntity<List<TaskViewModel>> getTaskForMonth(@PathVariable int monthId) {
+    final LocalDate localDate = LocalDate.of(2024, monthId + 1, 1);
+
+    final List<Task> taskList = taskDaoService.getTaskByPeriod(localDate);
     final List<TaskViewModel> taskViewModels = new ArrayList<>();
 
     taskList.forEach(i -> {
