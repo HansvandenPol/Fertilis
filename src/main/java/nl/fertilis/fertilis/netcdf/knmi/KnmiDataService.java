@@ -27,24 +27,6 @@ public class KnmiDataService {
   private final KnmiApi knmiApi;
   private final DatasetFileHandler datasetFileHandler;
 
-  private static final List<KnmiVariable> DATASET_VARIABLE_VALUES = new ArrayList<>();
-
-  static {
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.STATION_ID);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.STATION_NAME);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.STATION_LAT);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.STATION_LON);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.RAINFALL_DURATION_1H);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.WIND_DIRECTION_AVG_10MIN);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.WIND_SPEED_10METER_AVG_10MIN);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.RAINFALL_1H);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.RAINFALL_6H);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.RAINFALL_12H);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.RAINFALL_24H);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.SOIL_TEMP_5CM_AVG);
-    DATASET_VARIABLE_VALUES.add(KnmiVariable.SOIL_TEMP_10CM_AVG);
-  }
-
   public KnmiDataService(KnmiApi knmiApi, DatasetFileHandler datasetFileHandler) {
     this.knmiApi = knmiApi;
     this.datasetFileHandler = datasetFileHandler;
@@ -60,17 +42,45 @@ public class KnmiDataService {
   }
 
   public Knmi10MinApiResponse retrieveAll10MinKnmiData() {
+    final List<KnmiVariable> datasetList = new ArrayList<>();
+
+    datasetList.add(KnmiVariable.STATION_ID);
+    datasetList.add(KnmiVariable.STATION_NAME);
+    datasetList.add(KnmiVariable.STATION_LAT);
+    datasetList.add(KnmiVariable.STATION_LON);
+    datasetList.add(KnmiVariable.RAINFALL_DURATION_1H);
+    datasetList.add(KnmiVariable.WIND_DIRECTION_AVG_10MIN);
+    datasetList.add(KnmiVariable.WIND_SPEED_10METER_AVG_10MIN);
+    datasetList.add(KnmiVariable.RAINFALL_1H);
+    datasetList.add(KnmiVariable.RAINFALL_6H);
+    datasetList.add(KnmiVariable.RAINFALL_12H);
+    datasetList.add(KnmiVariable.RAINFALL_24H);
+    datasetList.add(KnmiVariable.SOIL_TEMP_5CM_AVG);
+    datasetList.add(KnmiVariable.SOIL_TEMP_10CM_AVG);
+
+    return createKnmiResponseDataKnmi10Min(datasetList);
+  }
+
+  public Knmi10MinApiResponse getQuickWeatherInformation() {
+    final List<KnmiVariable> datasetList = new ArrayList<>();
+    datasetList.add(KnmiVariable.WIND_DIRECTION_AVG_10MIN);
+    datasetList.add(KnmiVariable.RAINFALL_1H);
+    datasetList.add(KnmiVariable.AMBIENT_TEMP_6H_MAX);
+
+    return createKnmiResponseDataKnmi10Min(datasetList);
+  }
+
+  private Knmi10MinApiResponse createKnmiResponseDataKnmi10Min(List<KnmiVariable> datasetList) {
     // retrieve latest file
     final Path location = datasetFileHandler.getLatestDatasetPath(SUPPORTED_DATASET_PROVIDER.KNMI);
 
     final List<Knmi10MinStatistic> knmi10MinStatistics = new ArrayList<>();
     final Knmi10MinApiResponse response = new Knmi10MinApiResponse(Instant.now(), knmi10MinStatistics);
 
-
     // extract array data
     try(NetcdfFile file = NetcdfFiles.open(location.toString())) {
       log.info("Getting file name: {}", location.getFileName());
-      DATASET_VARIABLE_VALUES.forEach(i -> {
+      datasetList.forEach(i -> {
         final List<Knmi10MinStatisticData<?>> statisticDataList = new ArrayList<>();
         final Knmi10MinStatistic statistic = new Knmi10MinStatistic(i.variableName,i.description, statisticDataList);
 
