@@ -16,7 +16,9 @@ public enum KnmiVariable {
   RAINFALL_6H ("R6H","Rainfall in last 6 Hours"),
   SOIL_TEMP_5CM_AVG ("tb1","Soil Temperature -5cm 10 Min Average"),
   SOIL_TEMP_10CM_AVG ("tb2","Soil Temperature -10cm 10 Min Average"),
-  AMBIENT_TEMP_6H_MAX ("tx","Ambient Temperature 1.5m 10 Min Maximum");
+  AMBIENT_TEMP_6H_MAX ("tx","Ambient Temperature 1.5m 10 Min Maximum"),
+  WIND_SPEED_1H_AVG ("Sav1H","Wind Speed Average last 1 Hour"),
+  TOTAL_CLOUD_COVER ("n","Total cloud cover");
 
   final String variableName;
   final String description;

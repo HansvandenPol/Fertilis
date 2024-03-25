@@ -63,9 +63,12 @@ public class KnmiDataService {
 
   public Knmi10MinApiResponse getQuickWeatherInformation() {
     final List<KnmiVariable> datasetList = new ArrayList<>();
+    datasetList.add(KnmiVariable.STATION_NAME);
     datasetList.add(KnmiVariable.WIND_DIRECTION_AVG_10MIN);
     datasetList.add(KnmiVariable.RAINFALL_1H);
     datasetList.add(KnmiVariable.AMBIENT_TEMP_6H_MAX);
+    datasetList.add(KnmiVariable.WIND_SPEED_1H_AVG);
+    datasetList.add(KnmiVariable.TOTAL_CLOUD_COVER);
 
     return createKnmiResponseDataKnmi10Min(datasetList);
   }
