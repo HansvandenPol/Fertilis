@@ -13,7 +13,9 @@ import nl.fertilis.fertilis.weather.Knmi10MinApiResponse;
 import nl.fertilis.fertilis.weather.Knmi10MinStatistic;
 import nl.fertilis.fertilis.weather.Knmi10MinStatisticData;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import ucar.array.Array;
+import ucar.array.Section;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
 import ucar.nc2.Variable;
@@ -26,10 +28,12 @@ public class KnmiDataService {
   private static final int MAX_REQUEST_SIZE = 1;
   private final KnmiApi knmiApi;
   private final DatasetFileHandler datasetFileHandler;
+  private final KnmiStationService knmiStationService;
 
-  public KnmiDataService(KnmiApi knmiApi, DatasetFileHandler datasetFileHandler) {
+  public KnmiDataService(KnmiApi knmiApi, DatasetFileHandler datasetFileHandler, KnmiStationService knmiStationService) {
     this.knmiApi = knmiApi;
     this.datasetFileHandler = datasetFileHandler;
+    this.knmiStationService = knmiStationService;
   }
 
   public KnmiDatasetDownloadResult retrieveLatestDataset(String dataset) {
@@ -61,7 +65,11 @@ public class KnmiDataService {
     return createKnmiResponseDataKnmi10Min(datasetList);
   }
 
-  public Knmi10MinApiResponse getQuickWeatherInformation() {
+  public Knmi10MinApiResponse getQuickWeatherInformation(String latitude, String longitude) {
+    if(!StringUtils.hasText(latitude) || !StringUtils.hasText(longitude)) {
+      log.info("No geo information found");
+    }
+
     final List<KnmiVariable> datasetList = new ArrayList<>();
     datasetList.add(KnmiVariable.STATION_NAME);
     datasetList.add(KnmiVariable.WIND_DIRECTION_AVG_10MIN);
@@ -70,7 +78,56 @@ public class KnmiDataService {
     datasetList.add(KnmiVariable.WIND_SPEED_1H_AVG);
     datasetList.add(KnmiVariable.TOTAL_CLOUD_COVER);
 
-    return createKnmiResponseDataKnmi10Min(datasetList);
+    final var stationIndex = knmiStationService.getStationIndexByCoordinates(latitude, longitude);
+    return createKnmiResponseDataByStationId(datasetList, stationIndex);
+  }
+
+  private Knmi10MinApiResponse createKnmiResponseDataByStationId(List<KnmiVariable> datasetList, int stationId) {
+    // retrieve latest file
+    final Path location = datasetFileHandler.getLatestDatasetPath(SUPPORTED_DATASET_PROVIDER.KNMI);
+
+    final List<Knmi10MinStatistic> knmi10MinStatistics = new ArrayList<>();
+    final Knmi10MinApiResponse response = new Knmi10MinApiResponse(Instant.now(), knmi10MinStatistics);
+
+    // extract array data
+    try(NetcdfFile file = NetcdfFiles.open(location.toString())) {
+      log.info("Getting file name: {}", location.getFileName());
+      datasetList.forEach(i -> {
+        final List<Knmi10MinStatisticData<?>> statisticDataList = new ArrayList<>();
+        final Knmi10MinStatistic statistic = new Knmi10MinStatistic(i.variableName,i.description, statisticDataList);
+
+        int[] origin;
+        int[] size;
+
+        try {
+          if(i.variableName.equals("stationname")) {
+            origin = new int[]{stationId};
+            size = new int[]{1};
+          } else {
+            origin = new int[]{stationId, 0};
+            size = new int[]{1, 1};
+          }
+
+          Variable v = file.findVariable(i.variableName);
+          Array a = v.readArray(new Section(origin, size));
+          Iterator it = a.iterator();
+
+          int counter = 0;
+
+          while (it.hasNext()) {
+            final String item = String.valueOf(it.next());
+            statisticDataList.add(new Knmi10MinStatisticData<>(counter++, item));
+          }
+
+          knmi10MinStatistics.add(statistic);
+        } catch (Exception exception) {
+          log.info(exception.getMessage(), exception);
+        }
+      });
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
+    return response;
   }
 
   private Knmi10MinApiResponse createKnmiResponseDataKnmi10Min(List<KnmiVariable> datasetList) {

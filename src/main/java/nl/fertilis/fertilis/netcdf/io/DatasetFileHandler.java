@@ -63,9 +63,10 @@ public class DatasetFileHandler {
       stream.iterator().forEachRemaining(list::add);
 
       if(list.size() >= maxAmount ) {
-        orderPathsByDate(list, true);
+        list = orderPathsByDate(list, true);
 
-        Files.delete(list.get(0));
+        log.info("to delete: {}", list.get(0).toString());
+        Files.delete(list.getFirst());
       }
     } catch (Exception exception) {
       log.error(exception.getMessage(), exception);
@@ -84,6 +85,7 @@ public class DatasetFileHandler {
 
   private List<Path> orderPathsByDate(List<Path> paths, boolean isAscending) {
     List<Path> ordered =  paths.stream().sorted((i, j) -> {
+
       try {
         Instant a = Files.getLastModifiedTime(i)
                          .toInstant();
